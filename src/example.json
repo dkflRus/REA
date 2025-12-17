@@ -1,0 +1,12 @@
+{
+    "Alias":{
+        "pomodoro":"",
+        "wrapper":"WrapperApp"
+    },
+    "Baseline":[
+        "wrapper"
+    ],
+    "Connections":{
+        
+    }
+}

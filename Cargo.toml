@@ -1,5 +1,5 @@
 [package]
-name = "routine"
+name = "REA"
 version = "0.1.0"
 edition = "2024"
 
@@ -7,3 +7,6 @@ edition = "2024"
 eframe = "0.22.0"
 egui = "0.22.0"
 chrono = "0.4.31"
+rusqlite = "0.29.0"
+rand="*"
+uuid={ version = "1.19", features = ["v4"] }
