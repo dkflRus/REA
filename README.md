@@ -1,8 +1,3 @@
-> *Superego:* Predicting events is one of my main functions.  I survey the situation, anticipate probable outcomes, and act accordingly. <...> Long-range planning is my concern.
->
-> -["I have no mouth, and I must scream (1995)"](https://gamefaqs.gamespot.com/pc/197601-i-have-no-mouth-and-i-must-scream/faqs/59465)
-
-
 **REA** is a simple extensible calendar-planner framework. Partly written with use of Grok.
 
 CAPSLOCK written verbs MUST be used in accordace to [Key words for use in RFCs](https://www.rfc-editor.org/rfc/rfc2119)
@@ -203,8 +198,15 @@ section specifies other connections between R/E/As. This is the only section whe
 Since almost all R/E/A elements require some input, all of those inputs must be allowed to be provide by GUI. Since R/E/A elements have different inout types to accept those with GUI helping default Extensions
 
 
+## std
+List of R/E/As have a vast usage potential and are preprogrammed by developers:
 
+Apps:
 
+|App name|Purpose                          |Inputs|
+|--------|---------------------------------|------|
+|Adder   |adds defined Events to ET        |      |
+|Filter  |lets only selected Events through|      |
 
 Currently REA supports only one pipe per one running Core.
 > TODO: allow pipes branching

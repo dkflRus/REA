@@ -10,6 +10,7 @@ use std::any::TypeId;
 use crate::core::EventTable;
 
 mod core;
+mod gui;
 
 // Definitions
 
@@ -17,12 +18,13 @@ mod core;
 // End Definitionss
 
 
-const APPS_PIPELINE: Vec<Box<dyn App>> = vec![ //TODO: make changable through setting in file (.csv or smth)
-        Box::new(App1),
-        Box::new(App2),
-    ]; 
+// const APPS_PIPELINE: Vec<Box<dyn App>> = vec![ //TODO: make changable through setting in file (.csv or smth)
+//         Box::new(App1),
+//         Box::new(App2),
+//     ]; 
 
 fn main(){
+    gui::main();
 }
 
 
@@ -33,9 +35,7 @@ struct REAAppBackend{
 impl REAAppBackend {
     fn REA_update(starting_index:Option<u32>){
 
-        for app in APPS_PIPELINE[starting_index.unwrap_or(0)..]{
-    
-        }
+        // for app in APPS_PIPELINE[starting_index.unwrap_or(0)..]{}
     }
 }
 
@@ -54,13 +54,3 @@ impl REAAppBackend {
 //     fn process(&self,app_input:InputList)->Option<EventTable>;
 
 // }
-
-struct WrapperApp;
-impl core::App for WrapperApp {
-    fn get_name()->&'static str{"Wrapper"}
-    fn get_inputs()->&'static core::InputList -> {HList![
-            TypeId::of::<core::EventTable>(),
-            TypeId::of::<Vec::<core::UUID_TYPE>>()
-        ]
-    }
-}

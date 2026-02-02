@@ -1,8 +1,12 @@
 //Responsible for whole App structure and regulation.
+// For devs: during compairing entities like R/E/As or Uuids look carefully after if it is object==object or value==value
 
 
+use egui::epaint::ahash::random_state::RandomSource;
+use egui::output;
 use uuid::Uuid;
 
+use std::arch::x86_64;
 use std::collections::HashSet;
 use std::ops::Index;
 // ==========EVENTTABLE==========
@@ -17,7 +21,7 @@ type DateTimeType = DateTime<Utc>;
 #[derive(Clone, Debug)]
 pub struct Event {
     pub uuid: Uuid,
-    name: String,            //TODO?: Apps MUST NOT read this field directly → use append_name()
+    name: String,            //TODO?: E/As MUST NOT read/write this field directly → use append_name()
     pub start: DateTimeType,
     pub end:   DateTimeType,
 }
@@ -153,10 +157,10 @@ impl EventTable {
 use std::any::{Any, TypeId};
 use std::collections::HashMap;
 
-/// All IO of R/E/As except ET in Baseline
-type IOType = HashMap<
+/// All [IO of R/E/As] except [ET in Baseline]. Don't be confused, it is NOT TYPE of TYPE of IO; it is type of IO; it already contains IO info that is piped to make R/E/As communicate.
+type IOType<'a> = HashMap<
     String,                     // Name
-    Box<dyn Any+Send+Sync>      // Input/output itself
+    &'a Box<dyn Any+Send+Sync>      // Input/output itself
 >;
 
 enum R_E_AClass {
@@ -168,6 +172,12 @@ enum R_E_AClass {
 // DRY traits
 // (check ALL classes run() inputs after redacting any of them)
 
+/// Datatype for listing inputs/outputs of R/E/As
+type IOListOfTypes=HashMap<
+    String,
+    TypeId
+>;
+
 pub trait R_E_AGeneric{
     fn get_name(&self)->&'static str;
     fn get_class(&self)->&'static R_E_AClass;
@@ -175,10 +185,7 @@ pub trait R_E_AGeneric{
     /// Inputs of this R/E/A (except ET for R/A), can be empty.
     /// Inputs names, types and amount can be static(declared in code before compiling) or dynamic(procedurally generated)
     fn get_inputs(&self)
-    ->&'static Vec<(
-        String,
-        TypeId
-    )>;
+    ->&'static IOListOfTypes;
 }
 pub trait Render: R_E_AGeneric{
     fn run(&self,
@@ -188,27 +195,24 @@ pub trait Render: R_E_AGeneric{
 }
 pub trait Extension: R_E_AGeneric{
     fn get_outputs(&self)
-    ->&'static Vec<(
-        String,
-        TypeId
-    )>;
+    ->&'static IOListOfTypes;
     
     fn run(&self,
         inputs: IOType
-    )->Result<(),
-        Vec<(
-            String,
-            Box<dyn Any>
-        )>
+    )->Result<
+        IOType, // outputs of Extension
+        String //Err
     >;
 }
 pub trait App: R_E_AGeneric{
     fn run(&self,
         et: EventTable,
         inputs: IOType
-    )->Result<EventTable, String>;
+    )->Result<
+        EventTable, // for further baseline R/A
+        String //Err
+    >;
 }
-
 
 pub enum R_E_A {
     Render(Box<dyn Render>),
@@ -229,8 +233,12 @@ impl R_E_AGeneric for R_E_A {
         }
     }
 
-    fn get_inputs(&self) -> &'static Vec<(String, TypeId)> {
-        self.get_inputs()
+    fn get_inputs(&self) ->&'static IOListOfTypes{
+        match self {
+            R_E_A::Render(R) => R.get_inputs(),
+            R_E_A::Extension(E) => E.get_inputs(),
+            R_E_A::App(A) => A.get_inputs(),
+        }
     }
 }
 
@@ -239,7 +247,7 @@ impl R_E_AGeneric for R_E_A {
 // ==========PIPELINE==========
 // Each R/E/A in full run of Pipeline can be executed only once. If one program will be used repeatedly, they will be stored in alias multiple times with different Uuids
 
-struct Pipeline{
+struct Pipeline<'a>{
     /// If 'true': checkup [if all categories have correct class type] will be executed after any modification or import. Some checkups (for example check of "connections" if selected Element has this iutput/input) will always be done.
     pub check_classes:bool,
 
@@ -263,47 +271,93 @@ struct Pipeline{
     >,
     /// Buffer where E/A outputs will be stored until [R/E/A to which they are piped] are executed.
     memory_buffer:HashMap<Uuid, // Uuid of element that gives output
-        HashMap<String, // Name of output
-            Box<dyn Any> // Output itself
-        >
+        IOType<'a> // Name of output+Output itself
     >,
     current_et:EventTable
 }
-impl Pipeline {
+impl Pipeline<'_> {
     // === Checks
 
     // === runs + required functions
 
-    /// Assembles input for R/E/A from connections and memory_buffer
+    /// Assembles input for R/E/A from [connections and memory_buffer] for [element with UUID]
+    //TODO: optimize
     fn pull_inputs(
         &self,
         elementID: &Uuid,
     )->Result<
         IOType,
     String>{
-        if let required_inputs = self.R_E_AList.get(elementID).unwrap()
-        .get_inputs()
+        if let element = self.R_E_AList.get(elementID).unwrap() // checking out R/E/A for which we assemble inputs
         {
-            let mut inputs:IOType;
-            let connections=self.connections;
+            let mut inputs:IOType=IOType::new(); //final output of pull_inputs
+            let required_inputs=element.get_inputs();
 
-            for (name, type_id) in required_inputs {
-                if let Some(val) = inputs.get(name){
-                    if val.type_id() != *type_id{
-                        return Err(format!("Type mismatch for {} in {}", name, element.get_name()));
-                    }else{
-                        inputs.insert(
-                            name.clone(),
-                            { // searching and getting this input
-                                for q in connections{
-                                    if q.3==name
-                                }
-                            }
-                        );
+
+            let mut cropped_connections:Vec<&(Uuid, String, Uuid, String)>=Vec::new(); //=all connections of this R/E/A
+            for q in &self.connections{
+                if q.2==*elementID{cropped_connections.push(q)} // checking if target UUID R/E/A is our elementID; TODO: check if it does value==value, not obj==obj
+            }
+            for (curr_input_name, curr_input_type_id) in required_inputs {
+                let (source_uuid,source_name)={//getting [uuid of output element] and output name
+                    let index_try=cropped_connections.iter()
+                    .find(|x| x.3==*curr_input_name);
+
+                    if let Some(index)=index_try{
+                        (index.0,index.1.clone())
+                    }else{ //if None
+                        return Err(format!("pull_inputs(): connection for R/E/A {} with input name {} not found",
+                        elementID,curr_input_name));
                     }
-                }else{
-                    return Err(format!("Missing input {} for {}", name, element.get_name()));
+                };
+
+                let output_type=*(self.R_E_AList.get(&source_uuid).unwrap()).get_inputs().get(&source_name).unwrap();
+
+                let debug_string=format!("pull_inputs(): output of Extension {} named {} has type {:?}\n input of R/E/A {} with input name {} has type {:?}\n",source_uuid,source_name,output_type,
+                elementID,curr_input_name,curr_input_type_id);
+
+                if  output_type!=
+                    *curr_input_type_id{
+                    return Err(debug_string+"Different types");
                 }
+
+
+                // Finally getting input from self.memory_buffer yay!!
+                let wrapped_input_itself:Option<&&Box<dyn Any + Send + Sync + 'static>>=self.memory_buffer.get(&source_uuid).unwrap().get(&source_name);
+                if let Some(input_itself)=wrapped_input_itself{
+                    inputs.insert(
+                        curr_input_name.to_string(),
+                        input_itself
+                    );
+                }else{// if None
+                    return Err(debug_string+"This output is not found in memory_buffer, either it is not loaded YET or\n it does not exist (unusual since all names are checked in this function)")
+                }
+                        
+
+                    
+
+
+                // if let Some(val) = inputs.get(curr_input_name){ //checking out
+                    // if val.type_id() != *curr_type_id{
+                    //     return Err(format!("Type mismatch for {} in {}", curr_input_name, element.get_name()));
+                    // }else{
+                    //     inputs.insert(
+                    //         curr_input_name.clone(),
+                            
+                    //         { // searching and getting this input
+                    //             for connection_list in self.connections{
+                    //                 if connection_list.3==curr_input_name{
+
+                    //                     return 
+                    //                 }
+                    //             }
+
+                    //         }
+                    //     );
+                    // }
+                // }else{
+                //     return Err(format!("Missing input {} for {}", curr_input_name, element.get_name()));
+                // }
             }
 
             Ok(inputs)
@@ -321,30 +375,43 @@ impl Pipeline {
 
     pub fn execute_element(&mut self, 
         r_e_a_uuid: Uuid, 
-        chunk_inputs: &IOType
-    ) -> Result<(), String> 
-    {
-        let variant = self.R_E_AList.get(&r_e_a_uuid)
-            .ok_or(format!("R/E/A element {} not found", r_e_a_uuid))?;
+    ) -> Result<(), String> {
+        let mut outputs_box= None; // in case if R/E/A produces output
 
-        match variant.as_mut() {
+{        let inputs = self.pull_inputs(&r_e_a_uuid)?;  // Assume owned; borrow ends
+    
+        let et_clone = self.current_et.clone();  // Borrow ends
+    
+        // Get variant mut ref
+        let variant_ref = self.R_E_AList.get(&r_e_a_uuid)
+            .ok_or(format!("R/E/A element {} not found", r_e_a_uuid))?;
+        
+        // Match on mutable ref to avoid holding borrow across arms
+        match &**variant_ref {
+            R_E_A::Render(render) => {
+                render.run(et_clone, inputs)?;
+            }
+            R_E_A::Extension(ext) => {
+                outputs_box = Option::Some(ext.run(inputs)?); 
+    
+                // Drop variant_ref borrow by scoping
+            }  // End match, borrow drops
+    
             R_E_A::App(app) => {
-                let inputs = self.pull_inputs(app, chunk_inputs)?;  // Merge/compute specific inputs
-                let new_et = app.run(self.current_et.clone(), inputs)?;
+                let new_et = app.run(et_clone, inputs)?;
                 self.current_et = new_et;
                 self.current_et.check_self()?;
             }
-            R_E_A::Extension(ext) => {
-                let inputs = self.pull_inputs(ext, chunk_inputs)?;
-                let outputs = ext.run(inputs)?; //TODO:Allow provision of current ET
-                // Handle outputs: e.g., merge into next chunk's inputs or store.
-                // For now, assume it updates a temp map or something; adjust per needs.
-            }
-            R_E_A::Render(render) => {
-                let inputs = self.pull_inputs(render, chunk_inputs)?;
-                render.run(self.current_et.clone(), inputs)?;
-            }
         }
+}
+        // Now safe to borrow memory_buffer
+        if let Some(outputs)=outputs_box{ //TODO
+            // let memory_cell = self.memory_buffer.get_mut(&r_e_a_uuid)
+            // .ok_or(format!("Memory cell for {} not found", r_e_a_uuid))?;
+            // memory_cell.extend(outputs);
+            todo!();
+        }
+
         Ok(())
     }
 
@@ -353,13 +420,14 @@ impl Pipeline {
     fn run_baseline_until(&mut self, index:usize){
         for chunk in 0..index{
             for R_E_AUuid in self.execution_order.index(chunk){
-                self.R_E_AList.index(R_E_AUuid).;
+                // self.R_E_AList.index(R_E_AUuid).;
+                todo!();
             }
         }
     }
 
-    fn run_full(&self){
-        fn self.run_baseline_until(self.baseline.len())
+    fn run_full(&mut self){
+        self.run_baseline_until(self.baseline.len())
     }
 
 
