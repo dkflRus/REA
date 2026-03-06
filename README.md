@@ -16,7 +16,7 @@ REA is a framework that lets users build their own time‑planning applications 
 - Minimalism – the core framework does not impose any scheduling logic; it only orchestrates the flow of data between components.
 - Protectiveness – if components are correctly configured, they can be arranged in any order without crashing the system.
  
-Informal analogy: Imagine children building a tower. The teacher (REA) does not touch the tower but ensures the children (components) behave and the structure stays safe.
+> Informal analogy: Imagine children building a tower. The teacher (REA) does not touch the tower but ensures the children (components) behave and the structure stays safe.
  
 REA is implemented in Rust and serves as a solid domain layer, completely separated from presentation and data sources. It includes a default graphical interface built with egui, but the core can be used with any frontend.
  
@@ -24,17 +24,14 @@ REA is implemented in Rust and serves as a solid domain layer, completely separa
  
 ✨ Key Concepts
  
-EventTable
+**EventTable** is the fundamental data structure: a list of Events, each having at least a start time and an end time. Events are identified by UUIDs and can be extended with additional fields if needed (the framework allows future customisation).
  
-The fundamental data structure: a list of Events, each having at least a start time and an end time. Events are identified by UUIDs and can be extended with additional fields if needed (the framework allows future customisation).
- 
-Three Types of Components
- 
+Three Types of Components:
 1. Apps – modify the EventTable. They receive an input EventTable (plus any custom inputs provided by Extensions) and output a new EventTable. Apps are the only components that can change the schedule.
 2. Extensions – provide external data to Apps or other Extensions. They can fetch information from files, sensors, databases, machine learning models, or user input via GUI. Extensions are reusable and can supply input to multiple Apps.
 3. Renders – consume the final EventTable and output it in some form: a GUI window, a file, a web page, etc. Renders are the end point of a pipeline.
  
-Pipeline Configuration
+**Pipeline Configuration**
  
 Users define the order of execution in a JSON file, specifying which Apps run, which Extensions feed into them, and which Renders produce output. The core validates the pipeline to ensure that all required inputs are satisfied and that there are no circular dependencies.
  
@@ -65,12 +62,14 @@ Installation
  
 1. Clone the repository:
  
+   ```
    git clone https://github.com/dkflRus/REA.git
    cd REA
+   ```
  
 2. Run the example pipeline:
  
-   cargo run
+   ```cargo run```
  
    This will launch the default GUI with a sample configuration.
  
