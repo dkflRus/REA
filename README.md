@@ -1,4 +1,4 @@
-REA – Reconfigurable Extensible Agenda
+**REA** is a simple extensible calendar-planner framework. 
  
 A modular framework for building custom time‑planning applications in Rust.
  
@@ -10,7 +10,7 @@ A modular framework for building custom time‑planning applications in Rust.
  
 📌 Overview
  
-REA (Reconfigurable Extensible Agenda) is a framework that lets users build their own time‑planning applications by assembling independent, reusable components. Unlike traditional calendar apps with fixed features, REA gives complete freedom to define how schedules are created, modified, and visualised. It is designed with three core principles in mind:
+REA is a framework that lets users build their own time‑planning applications by assembling independent, reusable components. Unlike traditional calendar apps with fixed features, REA gives complete freedom to define how schedules are created, modified, and visualised. It is designed with three core principles in mind:
  
 · Extensibility – anyone can add new components (Apps, Extensions, Renders) to adapt the system to any scheduling need.
 · Minimalism – the core framework does not impose any scheduling logic; it only orchestrates the flow of data between components.
@@ -104,7 +104,7 @@ One of the most exciting developments is using REA together with my predictive m
 This integration demonstrates how REA can be used to turn abstract AI predictions into actionable plans – a perfect example of its real‑world applicability.
  
 ---
- 
+```
 📂 Repository Structure
  
 REA/
@@ -120,6 +120,7 @@ REA/
 ├── Cargo.toml           # Rust dependencies and metadata
 ├── README.md            # This file
 └── example_project.md   # Detailed pipeline guide
+```
 ---
  
 📄 License
