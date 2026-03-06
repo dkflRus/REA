@@ -12,9 +12,9 @@ A modular framework for building custom time‑planning applications in Rust.
  
 REA is a framework that lets users build their own time‑planning applications by assembling independent, reusable components. Unlike traditional calendar apps with fixed features, REA gives complete freedom to define how schedules are created, modified, and visualised. It is designed with three core principles in mind:
  
-· Extensibility – anyone can add new components (Apps, Extensions, Renders) to adapt the system to any scheduling need.
-· Minimalism – the core framework does not impose any scheduling logic; it only orchestrates the flow of data between components.
-· Protectiveness – if components are correctly configured, they can be arranged in any order without crashing the system.
+- Extensibility – anyone can add new components (Apps, Extensions, Renders) to adapt the system to any scheduling need.
+- Minimalism – the core framework does not impose any scheduling logic; it only orchestrates the flow of data between components.
+- Protectiveness – if components are correctly configured, they can be arranged in any order without crashing the system.
  
 Informal analogy: Imagine children building a tower. The teacher (REA) does not touch the tower but ensures the children (components) behave and the structure stays safe.
  
@@ -40,18 +40,18 @@ Users define the order of execution in a JSON file, specifying which Apps run, w
  
 Safety & Flexibility
  
-· Apps cannot read each other's internal state – they only communicate via EventTable.
-· Extensions are isolated and can be reused across different pipelines.
-· The core guarantees that any valid configuration will not panic (provided the components themselves are correctly implemented).
+- Apps cannot read each other's internal state – they only communicate via EventTable.
+- Extensions are isolated and can be reused across different pipelines.
+- The core guarantees that any valid configuration will not panic (provided the components themselves are correctly implemented).
  
 ---
  
 🛠️ Technologies Used
  
-· Rust – for performance, memory safety, and fearless concurrency.
-· egui – an immediate mode GUI library for the default interface.
-· JSON – for pipeline configuration files.
-· Git – version control.
+- Rust – for performance, memory safety, and fearless concurrency.
+- egui – an immediate mode GUI library for the default interface.
+- JSON – for pipeline configuration files.
+- Git – version control.
  
 ---
  
@@ -59,7 +59,7 @@ Safety & Flexibility
  
 Prerequisites
  
-· Install Rust and Cargo: rustup.rs
+- Install Rust and Cargo: rustup.rs
  
 Installation
  
@@ -84,12 +84,12 @@ Creating Your Own Pipeline
  
 🧠 What This Project Demonstrates
  
-· Software architecture design – separating core logic from presentation and data sources, creating extensible interfaces.
+- Software architecture design – separating core logic from presentation and data sources, creating extensible interfaces.
  
-· Rust proficiency – ownership, traits, generics, error handling, and safe concurrency.
-· Modularity – designing a system where users can plug in their own components without modifying the core.
-· Safety‑by‑design – enforcing rules at compile‑time and runtime to prevent crashes.
-· Practical integration – linking with external ML models (e.g., CarML) via Extensions to build intelligent scheduling systems.
+- Rust proficiency – ownership, traits, generics, error handling, and safe concurrency.
+- Modularity – designing a system where users can plug in their own components without modifying the core.
+- Safety‑by‑design – enforcing rules at compile‑time and runtime to prevent crashes.
+- Practical integration – linking with external ML models (e.g., CarML) via Extensions to build intelligent scheduling systems.
  
 ---
  
@@ -97,9 +97,9 @@ Creating Your Own Pipeline
  
 One of the most exciting developments is using REA together with my predictive maintenance project, CarML. In this setup:
  
-· CarML acts as an Extension, providing predicted repair dates and descriptions.
-· A custom App receives these predictions and inserts them into the EventTable as maintenance events.
-· A Render visualises the resulting maintenance schedule in an interactive dashboard.
+- CarML acts as an Extension, providing predicted repair dates and descriptions.
+- A custom App receives these predictions and inserts them into the EventTable as maintenance events.
+- A Render visualises the resulting maintenance schedule in an interactive dashboard.
  
 This integration demonstrates how REA can be used to turn abstract AI predictions into actionable plans – a perfect example of its real‑world applicability.
  
